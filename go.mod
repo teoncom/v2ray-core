@@ -40,6 +40,7 @@ require (
 	h12.io/socks v1.0.3
 	inet.af/netaddr v0.0.0-20211027220019-c74959edd3b6
 	lukechampine.com/blake3 v1.1.7
+	github.com/xiaokangwang/VLite v0.0.0-20211025121834-0283a2d8f1a6
 )
 
 // https://github.com/google/gvisor/releases/tag/release-20220314.0
