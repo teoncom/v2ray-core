@@ -51,6 +51,7 @@ import (
 	_ "github.com/v2fly/v2ray-core/v5/proxy/vmess/outbound"
 
 	// Developer preview proxies
+	_ "github.com/v2fly/v2ray-core/v5/proxy/vlite/inbound"
 	_ "github.com/v2fly/v2ray-core/v5/proxy/vlite/outbound"
 
 	// Transports
