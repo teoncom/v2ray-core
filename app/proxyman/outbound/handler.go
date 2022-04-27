@@ -156,8 +156,6 @@ func (h *Handler) Dispatch(ctx context.Context, link *transport.Link) {
 	switch {
 	case destination.Address.Family().IsDomain():
 		domainString = destination.Address.Domain()
-	case outbound.RouteTarget.Address != nil && outbound.RouteTarget.Address.Family().IsDomain():
-		domainString = outbound.RouteTarget.Address.Domain()
 	default:
 		domainString = ""
 	}
