@@ -32,18 +32,19 @@ var (
 	}, "protocol", "settings")
 
 	outboundConfigLoader = loader.NewJSONConfigLoader(loader.ConfigCreatorCache{
-		"blackhole":   func() interface{} { return new(BlackholeConfig) },
-		"freedom":     func() interface{} { return new(FreedomConfig) },
-		"http":        func() interface{} { return new(HTTPClientConfig) },
-		"shadowsocks": func() interface{} { return new(ShadowsocksClientConfig) },
-		"socks":       func() interface{} { return new(SocksClientConfig) },
-		"vless":       func() interface{} { return new(VLessOutboundConfig) },
-		"vmess":       func() interface{} { return new(VMessOutboundConfig) },
-		"trojan":      func() interface{} { return new(TrojanClientConfig) },
-		"dns":         func() interface{} { return new(DNSOutboundConfig) },
-		"loopback":    func() interface{} { return new(LoopbackConfig) },
-		"wireguard":   func() interface{} { return new(WireGuardClientConfig) },
-		"ssh":         func() interface{} { return new(SSHClientConfig) },
+		"blackhole":        func() interface{} { return new(BlackholeConfig) },
+		"freedom":          func() interface{} { return new(FreedomConfig) },
+		"http":             func() interface{} { return new(HTTPClientConfig) },
+		"shadowsocks":      func() interface{} { return new(ShadowsocksClientConfig) },
+		"socks":            func() interface{} { return new(SocksClientConfig) },
+		"vless":            func() interface{} { return new(VLessOutboundConfig) },
+		"vmess":            func() interface{} { return new(VMessOutboundConfig) },
+		"trojan":           func() interface{} { return new(TrojanClientConfig) },
+		"dns":              func() interface{} { return new(DNSOutboundConfig) },
+		"loopback":         func() interface{} { return new(LoopbackConfig) },
+		"wireguard":        func() interface{} { return new(WireGuardClientConfig) },
+		"ssh":              func() interface{} { return new(SSHClientConfig) },
+		"shadowsocks_sing": func() interface{} { return new(ShadowsocksSingClientConfig) },
 	}, "protocol", "settings")
 )
 
