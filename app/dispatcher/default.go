@@ -234,7 +234,7 @@ func (d *DefaultDispatcher) Dispatch(ctx context.Context, destination net.Destin
 	}
 	go func() {
 		cReader := &cachedReader{
-			reader: outbound.Reader.(*pipe.Reader),
+			reader: outbound.Reader.(buf.TimeoutReader),
 		}
 		outbound.Reader = cReader
 		result, err := sniff(ctx, cReader, destination.Network, sniffer)
