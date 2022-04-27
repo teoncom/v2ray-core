@@ -4,13 +4,10 @@ import (
 	"context"
 	"crypto/tls"
 	"io"
+	"net/netip"
 	"sync"
 
 	"github.com/lucas-clemente/quic-go"
-	"golang.org/x/net/dns/dnsmessage"
-	"golang.org/x/net/http2"
-	"net/netip"
-
 	"github.com/v2fly/v2ray-core/v5/common"
 	"github.com/v2fly/v2ray-core/v5/common/buf"
 	"github.com/v2fly/v2ray-core/v5/common/net"
@@ -19,6 +16,8 @@ import (
 	"github.com/v2fly/v2ray-core/v5/features/dns"
 	"github.com/v2fly/v2ray-core/v5/features/routing"
 	"github.com/v2fly/v2ray-core/v5/transport/internet"
+	"golang.org/x/net/dns/dnsmessage"
+	"golang.org/x/net/http2"
 )
 
 var _ dns.Transport = (*QUICTransport)(nil)

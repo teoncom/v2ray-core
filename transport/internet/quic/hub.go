@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/lucas-clemente/quic-go"
-
 	"github.com/v2fly/v2ray-core/v5/common"
 	"github.com/v2fly/v2ray-core/v5/common/net"
 	"github.com/v2fly/v2ray-core/v5/common/protocol/tls/cert"
