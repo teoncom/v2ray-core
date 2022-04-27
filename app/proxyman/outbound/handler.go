@@ -213,7 +213,7 @@ func (h *Handler) Dispatch(ctx context.Context, link *transport.Link) {
 		err := h.proxy.Process(ctx, link, h)
 		if err != nil {
 			cause := errors.Cause(err)
-			if !(cause == context.Canceled || cause == io.ErrClosedPipe) {
+			if !(cause == context.Canceled || cause == io.ErrClosedPipe || cause == io.EOF) {
 				err := newError("failed to process outbound traffic").Base(err)
 				err.WriteToLog(session.ExportIDToError(ctx))
 			}

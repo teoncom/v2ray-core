@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	C "github.com/sagernet/sing/common"
 	B "github.com/sagernet/sing/common/buf"
 	M "github.com/sagernet/sing/common/metadata"
 	"github.com/sagernet/sing/common/random"
@@ -21,6 +22,7 @@ import (
 	"github.com/v2fly/v2ray-core/v5/common/session"
 	"github.com/v2fly/v2ray-core/v5/transport"
 	"github.com/v2fly/v2ray-core/v5/transport/internet"
+	"github.com/v2fly/v2ray-core/v5/transport/pipe"
 )
 
 func init() {
@@ -131,18 +133,55 @@ func (o *Outbound) Process(ctx context.Context, link *transport.Link, dialer int
 		serverConn := o.method.DialEarlyConn(connection, singDestination(destination))
 
 		var handshake bool
-		if tr, ok := link.Reader.(buf.TimeoutReader); ok {
-			mb, err := tr.ReadMultiBufferTimeout(time.Millisecond * 100)
-			if err != nil && err != buf.ErrNotTimeoutReader && err != buf.ErrReadTimeout {
-				return newError("read payload").Base(err)
-			}
-			for _, buffer := range mb {
-				_, err = serverConn.Write(buffer.Bytes())
-				if err != nil {
-					return newError("write payload").Base(err)
+		if cachedReader, isCached := link.Reader.(pipe.CachedReader); isCached {
+			cached, _ := cachedReader.ReadMultiBufferCached()
+			if cached != nil && !cached.IsEmpty() {
+				_payload := B.StackNew()
+				payload := C.Dup(_payload)
+				for {
+					payload.FullReset()
+					nb, n := buf.SplitBytes(cached, payload.FreeBytes())
+					if n > 0 {
+						payload.Truncate(n)
+						_, err = serverConn.Write(payload.Bytes())
+						if err != nil {
+							return newError("write payload").Base(err)
+						}
+						handshake = true
+					}
+					if nb.IsEmpty() {
+						break
+					} else {
+						cached = nb
+					}
 				}
-				buffer.Release()
-				handshake = true
+			}
+		}
+		if !handshake {
+			if timeoutReader, isTimeoutReader := link.Reader.(buf.TimeoutReader); isTimeoutReader {
+				mb, err := timeoutReader.ReadMultiBufferTimeout(time.Millisecond * 100)
+				if err != nil && err != buf.ErrNotTimeoutReader && err != buf.ErrReadTimeout {
+					return newError("read payload").Base(err)
+				}
+				_payload := B.StackNew()
+				payload := C.Dup(_payload)
+				for {
+					payload.FullReset()
+					nb, n := buf.SplitBytes(mb, payload.FreeBytes())
+					if n > 0 {
+						payload.Truncate(n)
+						_, err = serverConn.Write(payload.Bytes())
+						if err != nil {
+							return newError("write payload").Base(err)
+						}
+						handshake = true
+					}
+					if nb.IsEmpty() {
+						break
+					} else {
+						mb = nb
+					}
+				}
 			}
 		}
 		if !handshake {
@@ -152,11 +191,24 @@ func (o *Outbound) Process(ctx context.Context, link *transport.Link, dialer int
 			}
 		}
 
-		conn := &connWrapper{
-			&buf.BufferedReader{Reader: link.Reader},
-			link.Writer,
-			inboundConn,
+		pipeIn := pipe.IsPipe(link.Reader)
+		pipeOut := pipe.IsPipe(link.Writer)
+
+		if inboundConn != nil && !pipeIn && !pipeOut {
+			return rw.CopyConn(ctx, inboundConn, serverConn)
 		}
+
+		conn := &pipeConnWrapper{
+			w:       link.Writer,
+			pipeOut: pipeOut,
+			Conn:    inboundConn,
+		}
+		if ir, ok := link.Reader.(io.Reader); ok {
+			conn.r = ir
+		} else {
+			conn.r = &buf.BufferedReader{Reader: link.Reader}
+		}
+
 		return rw.CopyConn(ctx, conn, serverConn)
 	} else {
 		var packetConn socks.PacketConn
@@ -187,37 +239,42 @@ func singDestination(destination net.Destination) *M.AddrPort {
 	return M.AddrPortFrom(addr, uint16(destination.Port))
 }
 
-type connWrapper struct {
-	r io.Reader
-	w buf.Writer
+type pipeConnWrapper struct {
+	r       io.Reader
+	w       buf.Writer
+	pipeOut bool
 	net.Conn
 }
 
-func (w *connWrapper) Close() error {
+func (w *pipeConnWrapper) Close() error {
 	common.Interrupt(w.r)
 	common.Interrupt(w.w)
 	common.Close(w.Conn)
 	return nil
 }
 
-func (w *connWrapper) Read(b []byte) (n int, err error) {
+func (w *pipeConnWrapper) Read(b []byte) (n int, err error) {
 	return w.r.Read(b)
 }
 
-func (w *connWrapper) Write(p []byte) (n int, err error) {
-	if w.Conn != nil {
-		return w.Conn.Write(p)
-	}
-	// avoid write stack buffer to pipe
-	buffer := buf.New()
-	_, err = buffer.Write(p)
-	if err != nil {
-		return
-	}
-	err = w.w.WriteMultiBuffer(buf.MultiBuffer{buffer})
-	if err != nil {
-		buffer.Release()
-		return
+func (w *pipeConnWrapper) Write(p []byte) (n int, err error) {
+	if w.pipeOut {
+		// avoid bad usage of stack buffer
+		buffer := buf.New()
+		_, err = buffer.Write(p)
+		if err != nil {
+			return
+		}
+		err = w.w.WriteMultiBuffer(buf.MultiBuffer{buffer})
+		if err != nil {
+			buffer.Release()
+			return
+		}
+	} else {
+		err = w.w.WriteMultiBuffer(buf.MultiBuffer{buf.FromBytes(p)})
+		if err != nil {
+			return
+		}
 	}
 	n = len(p)
 	return

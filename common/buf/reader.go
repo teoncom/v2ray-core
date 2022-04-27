@@ -166,6 +166,10 @@ func (r *BufferedReader) Close() error {
 	return common.Close(r.Reader)
 }
 
+func (r *BufferedReader) ReadMultiBufferCached() (MultiBuffer, error) {
+	return r.Buffer, nil
+}
+
 // SingleReader is a Reader that read one Buffer every time.
 type SingleReader struct {
 	io.Reader
