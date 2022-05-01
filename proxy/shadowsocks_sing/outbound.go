@@ -360,25 +360,25 @@ type packetConnWrapper struct {
 	cached buf.MultiBuffer
 }
 
-func (c *packetConnWrapper) ReadPacket(buffer *B.Buffer) (*M.AddrPort, error) {
-	if c.cached != nil {
-		mb, bb := buf.SplitFirst(c.cached)
+func (w *packetConnWrapper) ReadPacket(buffer *B.Buffer) (*M.AddrPort, error) {
+	if w.cached != nil {
+		mb, bb := buf.SplitFirst(w.cached)
 		if bb == nil {
-			c.cached = nil
+			w.cached = nil
 		} else {
 			buffer.Write(bb.Bytes())
 			bb.Release()
-			c.cached = mb
+			w.cached = mb
 			var destination net.Destination
 			if bb.Endpoint != nil {
 				destination = *bb.Endpoint
 			} else {
-				destination = c.dest
+				destination = w.dest
 			}
 			return singDestination(destination), nil
 		}
 	}
-	mb, err := c.ReadMultiBuffer()
+	mb, err := w.ReadMultiBuffer()
 	if err != nil {
 		return nil, err
 	}
@@ -388,20 +388,27 @@ func (c *packetConnWrapper) ReadPacket(buffer *B.Buffer) (*M.AddrPort, error) {
 	} else {
 		buffer.Write(bb.Bytes())
 		bb.Release()
-		c.cached = nb
+		w.cached = nb
 		var destination net.Destination
 		if bb.Endpoint != nil {
 			destination = *bb.Endpoint
 		} else {
-			destination = c.dest
+			destination = w.dest
 		}
 		return singDestination(destination), nil
 	}
 }
 
-func (c *packetConnWrapper) WritePacket(buffer *B.Buffer, addrPort *M.AddrPort) error {
+func (w *packetConnWrapper) WritePacket(buffer *B.Buffer, addrPort *M.AddrPort) error {
 	vBuf := buf.FromBytes(buffer.Bytes())
 	endpoint := net.DestinationFromAddr(addrPort.UDPAddr())
 	vBuf.Endpoint = &endpoint
-	return c.Writer.WriteMultiBuffer(buf.MultiBuffer{vBuf})
+	return w.Writer.WriteMultiBuffer(buf.MultiBuffer{vBuf})
+}
+
+func (w *packetConnWrapper) Close() error {
+	common.Interrupt(w.Reader)
+	common.Close(w.Conn)
+	buf.ReleaseMulti(w.cached)
+	return nil
 }
