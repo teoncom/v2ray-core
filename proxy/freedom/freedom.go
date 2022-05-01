@@ -234,7 +234,7 @@ func (h *Handler) ProcessConn(ctx context.Context, conn net.Conn, dialer interne
 		return newError("failed to open connection to ", destination).Base(err)
 	}
 
-	connElem := net.AddConnection(conn)
+	connElem := net.AddConnection(outboundConn)
 	defer net.RemoveConnection(connElem)
 
 	return rw.CopyConn(ctx, conn, outboundConn)

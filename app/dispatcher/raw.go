@@ -34,7 +34,7 @@ func (d *DefaultDispatcher) DispatchConn(ctx context.Context, destination net.De
 	}
 	sniffingRequest := content.SniffingRequest
 
-	if content.Protocol != "" || !sniffingRequest.Enabled {
+	if content.Protocol != "" || !sniffingRequest.Enabled && destination.Network != net.Network_UDP {
 		d.routedDispatchConn(ctx, conn, destination, wait)
 		return nil
 	}

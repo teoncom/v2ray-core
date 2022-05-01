@@ -259,6 +259,40 @@ func (h *Handler) DispatchConn(ctx context.Context, conn net.Conn) {
 		}
 	}
 
+	if h.mux != nil && h.mux.Enabled {
+		link := &transport.Link{
+			Reader: buf.NewReader(conn),
+			Writer: buf.NewWriter(conn),
+		}
+		if destination.Network == net.Network_UDP {
+			switch h.muxPacketEncoding {
+			case packetaddr.PacketAddrType_None:
+				link.Reader = &buf.EndpointErasureReader{Reader: link.Reader}
+				link.Writer = &buf.EndpointErasureWriter{Writer: link.Writer}
+			case packetaddr.PacketAddrType_XUDP:
+				break
+			case packetaddr.PacketAddrType_Packet:
+				link.Reader = packetaddr.NewReversePacketReader(link.Reader, destination)
+				link.Writer = packetaddr.NewReversePacketWriter(link.Writer)
+				outbound.Target = net.Destination{
+					Network: net.Network_UDP,
+					Address: net.DomainAddress(packetaddr.SeqPacketMagicAddress),
+					Port:    0,
+				}
+			}
+		}
+		if err := h.mux.Dispatch(ctx, link); err != nil {
+			cause := errors.Cause(err)
+			if !(cause == io.EOF || cause == context.Canceled || cause == io.ErrClosedPipe) {
+				err := newError("failed to process mux outbound traffic").Base(err)
+				err.WriteToLog(session.ExportIDToError(ctx))
+			}
+			session.SubmitOutboundErrorToOriginator(ctx, err)
+			common.Interrupt(link.Writer)
+		}
+		return
+	}
+
 	err := h.proxy.(proxy.RawOutbound).ProcessConn(ctx, conn, h)
 	if err != nil {
 		cause := errors.Cause(err)
