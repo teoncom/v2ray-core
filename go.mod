@@ -20,6 +20,7 @@ require (
 	github.com/lucas-clemente/quic-go v0.27.0
 	github.com/marten-seemann/qtls-go1-17 v0.1.1
 	github.com/miekg/dns v1.1.48
+	github.com/mustafaturan/bus v1.0.2
 	github.com/pires/go-proxyproto v0.6.2
 	github.com/sagernet/sing v0.0.0-20220430235326-118c4237741a
 	github.com/seiflotfy/cuckoofilter v0.0.0-20220411075957-e3b120b3f5fb
@@ -27,6 +28,7 @@ require (
 	github.com/v2fly/BrowserBridge v0.0.0-20210430233438-0570fc1d7d08
 	github.com/v2fly/VSign v0.0.0-20201108000810-e2adc24bf848
 	github.com/v2fly/ss-bloomring v0.0.0-20210312155135-28617310f63e
+	github.com/xiaokangwang/VLite v0.0.0-20220418190619-cff95160a432
 	github.com/xtls/go v0.0.0-20210920065950-d4af136d3672
 	go.starlark.net v0.0.0-20220328144851-d1966c6b9fcd
 	golang.org/x/crypto v0.0.0-20220427172511-eb4f295cb31f
@@ -40,7 +42,6 @@ require (
 	h12.io/socks v1.0.3
 	inet.af/netaddr v0.0.0-20211027220019-c74959edd3b6
 	lukechampine.com/blake3 v1.1.7
-	github.com/xiaokangwang/VLite v0.0.0-20211025121834-0283a2d8f1a6
 )
 
 // https://github.com/google/gvisor/releases/tag/release-20220314.0
@@ -49,6 +50,8 @@ replace gvisor.dev/gvisor => github.com/sagernet/gvisor v0.0.0-20220402114650-76
 //replace github.com/sagernet/sing => ../sing
 
 require (
+	github.com/aead/cmac v0.0.0-20160719120800-7af84192f0b1 // indirect
+	github.com/boljen/go-bitmap v0.0.0-20151001105940-23cd2fb0ce7d // indirect
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-metro v0.0.0-20211217172704-adc40b04c140 // indirect
@@ -59,15 +62,24 @@ require (
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0 // indirect
 	github.com/google/btree v1.0.1 // indirect
+	github.com/klauspost/cpuid v1.2.3 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.12 // indirect
+	github.com/klauspost/reedsolomon v1.9.3 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/lunixbochs/struc v0.0.0-20200707160740-784aaebc1d40 // indirect
 	github.com/marten-seemann/qtls-go1-16 v0.1.5 // indirect
 	github.com/marten-seemann/qtls-go1-18 v0.1.1 // indirect
+	github.com/mustafaturan/monoton v1.0.0 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
+	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
+	github.com/pion/dtls/v2 v2.0.0-rc.7 // indirect
+	github.com/pion/logging v0.2.2 // indirect
+	github.com/pion/sctp v1.7.6 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/riobard/go-bloom v0.0.0-20200614022211-cdc8013cb5b3 // indirect
+	github.com/secure-io/siv-go v0.0.0-20180922214919-5ff40651e2c4 // indirect
 	github.com/xtaci/smux v1.5.16 // indirect
 	go4.org/intern v0.0.0-20220301175310-a089fc204883 // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20211027215541-db492cf91b37 // indirect
