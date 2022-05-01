@@ -6,6 +6,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/sagernet/sing/common/rw"
 	core "github.com/v2fly/v2ray-core/v5"
 	"github.com/v2fly/v2ray-core/v5/common"
 	"github.com/v2fly/v2ray-core/v5/common/buf"
@@ -188,6 +189,55 @@ func (h *Handler) Process(ctx context.Context, link *transport.Link, dialer inte
 	}
 
 	return nil
+}
+
+func (h *Handler) ProcessConn(ctx context.Context, conn net.Conn, dialer internet.Dialer) error {
+	outbound := session.OutboundFromContext(ctx)
+	if outbound == nil || !outbound.Target.IsValid() {
+		return newError("target not specified.")
+	}
+	destination := outbound.Target
+	if h.config.DestinationOverride != nil {
+		server := h.config.DestinationOverride.Server
+		if isValidAddress(server.Address) {
+			destination.Address = server.Address.AsAddress()
+		}
+		if server.Port != 0 {
+			destination.Port = net.Port(server.Port)
+		}
+	}
+	newError("opening connection to ", destination).WriteToLog(session.ExportIDToError(ctx))
+
+	var outboundConn internet.Connection
+	err := retry.ExponentialBackoff(5, 100).On(func() error {
+		dialDest := destination
+		if h.config.useIP() && dialDest.Address.Family().IsDomain() {
+			ip := h.resolveIP(ctx, dialDest.Address.Domain(), dialer.Address())
+			if ip != nil {
+				dialDest = net.Destination{
+					Network: dialDest.Network,
+					Address: ip,
+					Port:    dialDest.Port,
+				}
+				newError("dialing to ", dialDest).WriteToLog(session.ExportIDToError(ctx))
+			}
+		}
+
+		rawConn, err := dialer.Dial(ctx, dialDest)
+		if err != nil {
+			return err
+		}
+		outboundConn = rawConn
+		return nil
+	})
+	if err != nil {
+		return newError("failed to open connection to ", destination).Base(err)
+	}
+
+	connElem := net.AddConnection(conn)
+	defer net.RemoveConnection(connElem)
+
+	return rw.CopyConn(ctx, conn, outboundConn)
 }
 
 func newPacketReader(conn net.Conn) buf.Reader {

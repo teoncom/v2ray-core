@@ -222,6 +222,55 @@ func (h *Handler) Dispatch(ctx context.Context, link *transport.Link) {
 	}
 }
 
+func (h *Handler) IsConnDispatcher() bool {
+	_, ok := h.proxy.(proxy.RawOutbound)
+	return ok
+}
+
+func (h *Handler) DispatchConn(ctx context.Context, conn net.Conn) {
+	outbound := session.OutboundFromContext(ctx)
+	destination := outbound.Target
+
+	var domainString string
+	switch {
+	case destination.Address.Family().IsDomain():
+		domainString = destination.Address.Domain()
+	default:
+		domainString = ""
+	}
+
+	var domainStrategy proxyman.DomainStrategy
+	if h.senderSettings != nil {
+		domainStrategy = h.senderSettings.DomainStrategy
+	}
+
+	if domainStrategy == proxyman.DomainStrategy_AS_IS && proxyman.PreferUseIPFromContext(ctx) {
+		domainStrategy = proxyman.DomainStrategy_USE_IP
+		ctx = proxyman.SetPreferUseIP(ctx, false)
+	}
+
+	if domainStrategy != proxyman.DomainStrategy_AS_IS && domainString != "" {
+		ctx, cancel := context.WithTimeout(ctx, dns.DefaultTimeout)
+		defer cancel()
+		ips, _, err := h.dnsClient.Lookup(ctx, domainString, dns.QueryStrategy(domainStrategy-1))
+		if err == nil {
+			destination.Address = net.IPAddress(ips[0])
+			outbound.Target = destination
+		}
+	}
+
+	err := h.proxy.(proxy.RawOutbound).ProcessConn(ctx, conn, h)
+	if err != nil {
+		cause := errors.Cause(err)
+		if !(cause == context.Canceled || cause == io.ErrClosedPipe || cause == io.EOF) {
+			err := newError("failed to process outbound traffic").Base(err)
+			err.WriteToLog(session.ExportIDToError(ctx))
+		}
+		session.SubmitOutboundErrorToOriginator(ctx, err)
+	}
+	common.Close(conn)
+}
+
 // Address implements internet.Dialer.
 func (h *Handler) Address() net.Address {
 	if h.senderSettings == nil || h.senderSettings.Via == nil {

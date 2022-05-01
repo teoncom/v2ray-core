@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/mustafaturan/bus"
 	"github.com/v2fly/v2ray-core/v5/common"
 	"github.com/v2fly/v2ray-core/v5/common/environment"
 	"github.com/v2fly/v2ray-core/v5/common/environment/envctx"
@@ -15,8 +16,6 @@ import (
 	"github.com/v2fly/v2ray-core/v5/common/signal/done"
 	"github.com/v2fly/v2ray-core/v5/features/routing"
 	"github.com/v2fly/v2ray-core/v5/transport/internet"
-
-	"github.com/mustafaturan/bus"
 	"github.com/xiaokangwang/VLite/interfaces"
 	"github.com/xiaokangwang/VLite/interfaces/ibus"
 	"github.com/xiaokangwang/VLite/transport"

@@ -9,6 +9,7 @@ import (
 
 	C "github.com/sagernet/sing/common"
 	B "github.com/sagernet/sing/common/buf"
+	E "github.com/sagernet/sing/common/exceptions"
 	M "github.com/sagernet/sing/common/metadata"
 	"github.com/sagernet/sing/common/random"
 	"github.com/sagernet/sing/common/rw"
@@ -231,6 +232,72 @@ func (o *Outbound) Process(ctx context.Context, link *transport.Link, dialer int
 		serverConn := o.method.DialPacketConn(connection)
 		return socks.CopyPacketConn(ctx, packetConn, serverConn)
 	}
+}
+
+func (o *Outbound) ProcessConn(ctx context.Context, conn net.Conn, dialer internet.Dialer) error {
+	outbound := session.OutboundFromContext(ctx)
+	if outbound == nil || !outbound.Target.IsValid() {
+		return newError("target not specified")
+	}
+	/*if statConn, ok := inboundConn.(*internet.StatCouterConnection); ok {
+		inboundConn = statConn.Connection
+	}*/
+	destination := outbound.Target
+	network := destination.Network
+
+	newError("tunneling request to ", destination, " via ", o.server.NetAddr()).WriteToLog(session.ExportIDToError(ctx))
+
+	serverDestination := o.server
+	serverDestination.Network = network
+	connection, err := dialer.Dial(ctx, serverDestination)
+	if err != nil {
+		return newError("failed to connect to server").Base(err)
+	}
+
+	connElem := net.AddConnection(connection)
+	defer net.RemoveConnection(connElem)
+
+	serverConn := o.method.DialEarlyConn(connection, singDestination(destination))
+
+	if cr, ok := conn.(rw.CachedReader); ok {
+		cached := cr.ReadCached()
+		if cached != nil && !cached.IsEmpty() {
+			_, err = serverConn.Write(cached.Bytes())
+			cached.Release()
+			if err != nil {
+				return newError("client handshake").Base(err)
+			}
+			goto direct
+		}
+	}
+
+	{
+		err = conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
+		if err != nil {
+			return err
+		}
+
+		_request := buf.StackNew()
+		request := C.Dup(_request)
+
+		_, err = request.ReadFrom(conn)
+		if err != nil && !E.IsTimeout(err) {
+			return err
+		}
+
+		err = conn.SetReadDeadline(time.Time{})
+		if err != nil {
+			return err
+		}
+
+		_, err = serverConn.Write(request.Bytes())
+		if err != nil {
+			return newError("client handshake").Base(err)
+		}
+	}
+
+direct:
+	return rw.CopyConn(ctx, conn, serverConn)
 }
 
 func singDestination(destination net.Destination) *M.AddrPort {
