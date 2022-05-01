@@ -57,7 +57,7 @@ func NewClient(ctx context.Context, config *ClientConfig) (*Outbound, error) {
 			}
 			key = bKdy
 		}
-		rng := random.Blake3KeyedHash()
+		rng := random.Blake3KeyedHash().Reader
 		if config.ReducedIvHeadEntropy {
 			rng = &shadowsocks.ReducedEntropyReader{
 				Reader: rng,
@@ -75,15 +75,20 @@ func NewClient(ctx context.Context, config *ClientConfig) (*Outbound, error) {
 		if config.Key == "" {
 			return nil, newError("missing psk")
 		}
-		var pskList [][]byte
-		for _, psk := range strings.Split(config.Key, ":") {
-			bKdy, err := base64.StdEncoding.DecodeString(psk)
+		var pskList [][shadowaead_2022.KeySaltSize]byte
+		for _, ks := range strings.Split(config.Key, ":") {
+			kb, err := base64.StdEncoding.DecodeString(ks)
 			if err != nil {
-				return nil, newError("decode key ", psk).Base(err)
+				return nil, newError("decode key ", ks).Base(err)
 			}
-			pskList = append(pskList, bKdy)
+			if len(kb) != shadowaead_2022.KeySaltSize {
+				return nil, shadowaead.ErrBadKey
+			}
+			var psk [shadowaead_2022.KeySaltSize]byte
+			copy(psk[:], kb)
+			pskList = append(pskList, psk)
 		}
-		rng := random.Blake3KeyedHash()
+		rng := random.Blake3KeyedHash().Reader
 		if config.ReducedIvHeadEntropy {
 			rng = &shadowsocks.ReducedEntropyReader{
 				Reader: rng,
