@@ -39,7 +39,7 @@ type Client struct {
 }
 
 func NewClient(ctx context.Context, config *ClientConfig) (*Client, error) {
-	return &Client{
+	c := &Client{
 		ctx: ctx,
 		server: net.Destination{
 			Address: config.Address.AsAddress(),
@@ -50,7 +50,11 @@ func NewClient(ctx context.Context, config *ClientConfig) (*Client, error) {
 		serverName: config.ServerName,
 		nextProtos: config.NextProtos,
 		insecure:   config.Insecure,
-	}, nil
+	}
+	if c.serverName == "" {
+		c.serverName = c.server.Address.String()
+	}
+	return c, nil
 }
 
 func (c *Client) ProcessConn(ctx context.Context, conn net.Conn, dialer internet.Dialer) error {
