@@ -44,8 +44,6 @@ require (
 	lukechampine.com/blake3 v1.1.7
 )
 
-require github.com/sirupsen/logrus v1.8.1 // indirect
-
 // https://github.com/google/gvisor/releases/tag/release-20220314.0
 replace gvisor.dev/gvisor => github.com/sagernet/gvisor v0.0.0-20220402114650-763d12dc953e
 
@@ -83,6 +81,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/riobard/go-bloom v0.0.0-20200614022211-cdc8013cb5b3 // indirect
 	github.com/secure-io/siv-go v0.0.0-20180922214919-5ff40651e2c4 // indirect
+	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/xtaci/smux v1.5.16 // indirect
 	go4.org/intern v0.0.0-20220301175310-a089fc204883 // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20211027215541-db492cf91b37 // indirect
