@@ -145,7 +145,7 @@ func (s *Server) Process(ctx context.Context, network net.Network, conn internet
 	sid := session.ExportIDToError(ctx)
 
 	iConn := conn
-	statConn, ok := iConn.(*internet.StatCouterConnection)
+	statConn, ok := iConn.(*internet.StatCounterConn)
 	if ok {
 		iConn = statConn.Connection
 	}
@@ -338,7 +338,7 @@ func (s *Server) handleUDPPayload(ctx context.Context, clientReader *PacketReade
 func (s *Server) handleConnection(ctx context.Context, sessionPolicy policy.Session,
 	destination net.Destination,
 	clientReader buf.Reader,
-	clientWriter buf.Writer, dispatcher routing.Dispatcher, iConn internet.Connection, rawConn syscall.RawConn, statConn *internet.StatCouterConnection,
+	clientWriter buf.Writer, dispatcher routing.Dispatcher, iConn internet.Connection, rawConn syscall.RawConn, statConn *internet.StatCounterConn,
 ) error {
 	ctx, cancel := context.WithCancel(ctx)
 	timer := signal.CancelAfterInactivity(ctx, cancel, sessionPolicy.Timeouts.ConnectionIdle)

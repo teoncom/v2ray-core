@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	C "github.com/sagernet/sing/common"
 	B "github.com/sagernet/sing/common/buf"
 	E "github.com/sagernet/sing/common/exceptions"
 	"github.com/sagernet/sing/common/rw"
@@ -51,12 +50,12 @@ func (d *DefaultDispatcher) DispatchConn(ctx context.Context, destination net.De
 
 	var header *B.Buffer
 
-	if wait {
+	/*if wait {
 		_header := B.StackNew()
 		header = C.Dup(_header)
-	} else {
-		header = B.New()
-	}
+	} else {*/
+	header = B.New()
+	//}
 
 	_, err = header.ReadFrom(conn)
 	if err != nil && !E.IsTimeout(err) {

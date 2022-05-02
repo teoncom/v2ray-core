@@ -117,7 +117,7 @@ func (o *Outbound) Process(ctx context.Context, link *transport.Link, dialer int
 	if outbound == nil || !outbound.Target.IsValid() {
 		return newError("target not specified")
 	}
-	/*if statConn, ok := inboundConn.(*internet.StatCouterConnection); ok {
+	/*if statConn, ok := inboundConn.(*internet.StatCounterConn); ok {
 		inboundConn = statConn.Connection
 	}*/
 	destination := outbound.Target
@@ -136,7 +136,7 @@ func (o *Outbound) Process(ctx context.Context, link *transport.Link, dialer int
 	defer net.RemoveConnection(connElem)
 
 	if network == net.Network_TCP {
-		serverConn := o.method.DialEarlyConn(connection, singDestination(destination))
+		serverConn := o.method.DialEarlyConn(connection, SingDestination(destination))
 
 		var handshake bool
 		if cachedReader, isCached := link.Reader.(pipe.CachedReader); isCached {
@@ -204,15 +204,15 @@ func (o *Outbound) Process(ctx context.Context, link *transport.Link, dialer int
 			return rw.CopyConn(ctx, inboundConn, serverConn)
 		}
 
-		conn := &pipeConnWrapper{
-			w:       link.Writer,
-			pipeOut: pipeOut,
+		conn := &PipeConnWrapper{
+			W:       link.Writer,
+			PipeOut: pipeOut,
 			Conn:    inboundConn,
 		}
 		if ir, ok := link.Reader.(io.Reader); ok {
-			conn.r = ir
+			conn.R = ir
 		} else {
-			conn.r = &buf.BufferedReader{Reader: link.Reader}
+			conn.R = &buf.BufferedReader{Reader: link.Reader}
 		}
 
 		return rw.CopyConn(ctx, conn, serverConn)
@@ -221,11 +221,11 @@ func (o *Outbound) Process(ctx context.Context, link *transport.Link, dialer int
 		if pc, isPacketConn := inboundConn.(socks.PacketConn); isPacketConn {
 			packetConn = pc
 		} else {
-			packetConn = &packetConnWrapper{
+			packetConn = &PacketConnWrapper{
 				Reader: link.Reader,
 				Writer: link.Writer,
 				Conn:   inboundConn,
-				dest:   destination,
+				Dest:   destination,
 			}
 		}
 
@@ -239,7 +239,7 @@ func (o *Outbound) ProcessConn(ctx context.Context, conn net.Conn, dialer intern
 	if outbound == nil || !outbound.Target.IsValid() {
 		return newError("target not specified")
 	}
-	/*if statConn, ok := inboundConn.(*internet.StatCouterConnection); ok {
+	/*if statConn, ok := inboundConn.(*internet.StatCounterConn); ok {
 		inboundConn = statConn.Connection
 	}*/
 	destination := outbound.Target
@@ -257,7 +257,7 @@ func (o *Outbound) ProcessConn(ctx context.Context, conn net.Conn, dialer intern
 	connElem := net.AddConnection(connection)
 	defer net.RemoveConnection(connElem)
 
-	serverConn := o.method.DialEarlyConn(connection, singDestination(destination))
+	serverConn := o.method.DialEarlyConn(connection, SingDestination(destination))
 
 	if cr, ok := conn.(rw.CachedReader); ok {
 		cached := cr.ReadCached()
@@ -277,7 +277,7 @@ func (o *Outbound) ProcessConn(ctx context.Context, conn net.Conn, dialer intern
 			return err
 		}
 
-		_request := buf.StackNew()
+		_request := B.StackNew()
 		request := C.Dup(_request)
 
 		_, err = request.ReadFrom(conn)
@@ -300,7 +300,7 @@ direct:
 	return rw.CopyConn(ctx, conn, serverConn)
 }
 
-func singDestination(destination net.Destination) *M.AddrPort {
+func SingDestination(destination net.Destination) *M.AddrPort {
 	var addr M.Addr
 	switch destination.Address.Family() {
 	case net.AddressFamilyDomain:
@@ -311,39 +311,39 @@ func singDestination(destination net.Destination) *M.AddrPort {
 	return M.AddrPortFrom(addr, uint16(destination.Port))
 }
 
-type pipeConnWrapper struct {
-	r       io.Reader
-	w       buf.Writer
-	pipeOut bool
+type PipeConnWrapper struct {
+	R       io.Reader
+	W       buf.Writer
+	PipeOut bool
 	net.Conn
 }
 
-func (w *pipeConnWrapper) Close() error {
-	common.Interrupt(w.r)
-	common.Interrupt(w.w)
+func (w *PipeConnWrapper) Close() error {
+	common.Interrupt(w.R)
+	common.Interrupt(w.W)
 	common.Close(w.Conn)
 	return nil
 }
 
-func (w *pipeConnWrapper) Read(b []byte) (n int, err error) {
-	return w.r.Read(b)
+func (w *PipeConnWrapper) Read(b []byte) (n int, err error) {
+	return w.R.Read(b)
 }
 
-func (w *pipeConnWrapper) Write(p []byte) (n int, err error) {
-	if w.pipeOut {
+func (w *PipeConnWrapper) Write(p []byte) (n int, err error) {
+	if w.PipeOut {
 		// avoid bad usage of stack buffer
 		buffer := buf.New()
 		_, err = buffer.Write(p)
 		if err != nil {
 			return
 		}
-		err = w.w.WriteMultiBuffer(buf.MultiBuffer{buffer})
+		err = w.W.WriteMultiBuffer(buf.MultiBuffer{buffer})
 		if err != nil {
 			buffer.Release()
 			return
 		}
 	} else {
-		err = w.w.WriteMultiBuffer(buf.MultiBuffer{buf.FromBytes(p)})
+		err = w.W.WriteMultiBuffer(buf.MultiBuffer{buf.FromBytes(p)})
 		if err != nil {
 			return
 		}
@@ -352,15 +352,15 @@ func (w *pipeConnWrapper) Write(p []byte) (n int, err error) {
 	return
 }
 
-type packetConnWrapper struct {
+type PacketConnWrapper struct {
 	buf.Reader
 	buf.Writer
 	net.Conn
-	dest   net.Destination
+	Dest   net.Destination
 	cached buf.MultiBuffer
 }
 
-func (w *packetConnWrapper) ReadPacket(buffer *B.Buffer) (*M.AddrPort, error) {
+func (w *PacketConnWrapper) ReadPacket(buffer *B.Buffer) (*M.AddrPort, error) {
 	if w.cached != nil {
 		mb, bb := buf.SplitFirst(w.cached)
 		if bb == nil {
@@ -373,9 +373,9 @@ func (w *packetConnWrapper) ReadPacket(buffer *B.Buffer) (*M.AddrPort, error) {
 			if bb.Endpoint != nil {
 				destination = *bb.Endpoint
 			} else {
-				destination = w.dest
+				destination = w.Dest
 			}
-			return singDestination(destination), nil
+			return SingDestination(destination), nil
 		}
 	}
 	mb, err := w.ReadMultiBuffer()
@@ -393,20 +393,20 @@ func (w *packetConnWrapper) ReadPacket(buffer *B.Buffer) (*M.AddrPort, error) {
 		if bb.Endpoint != nil {
 			destination = *bb.Endpoint
 		} else {
-			destination = w.dest
+			destination = w.Dest
 		}
-		return singDestination(destination), nil
+		return SingDestination(destination), nil
 	}
 }
 
-func (w *packetConnWrapper) WritePacket(buffer *B.Buffer, addrPort *M.AddrPort) error {
+func (w *PacketConnWrapper) WritePacket(buffer *B.Buffer, addrPort *M.AddrPort) error {
 	vBuf := buf.FromBytes(buffer.Bytes())
 	endpoint := net.DestinationFromAddr(addrPort.UDPAddr())
 	vBuf.Endpoint = &endpoint
 	return w.Writer.WriteMultiBuffer(buf.MultiBuffer{vBuf})
 }
 
-func (w *packetConnWrapper) Close() error {
+func (w *PacketConnWrapper) Close() error {
 	common.Interrupt(w.Reader)
 	common.Close(w.Conn)
 	buf.ReleaseMulti(w.cached)

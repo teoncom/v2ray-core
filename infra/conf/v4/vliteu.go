@@ -1,13 +1,6 @@
 package v4
 
-import (
-	"github.com/golang/protobuf/proto"
-	"github.com/v2fly/v2ray-core/v5/infra/conf/cfgcommon"
-	"github.com/v2fly/v2ray-core/v5/proxy/vlite/inbound"
-	"github.com/v2fly/v2ray-core/v5/proxy/vlite/outbound"
-)
-
-type VLiteUDPInboundConfig struct {
+/*type VLiteUDPInboundConfig struct {
 	Password                    string `json:"password"`
 	ScramblePacket              bool   `json:"scramble_packet"`
 	EnableFEC                   bool   `json:"enable_fec"`
@@ -50,3 +43,4 @@ func (c *VLiteUDPOutboundConfig) Build() (proto.Message, error) {
 		HandshakeMaskingPaddingSize: c.HandshakeMaskingPaddingSize,
 	}, nil
 }
+*/
