@@ -367,7 +367,6 @@ func (w *PacketConnWrapper) ReadPacket(buffer *B.Buffer) (*M.AddrPort, error) {
 			w.cached = nil
 		} else {
 			buffer.Write(bb.Bytes())
-			bb.Release()
 			w.cached = mb
 			var destination net.Destination
 			if bb.Endpoint != nil {
@@ -375,6 +374,7 @@ func (w *PacketConnWrapper) ReadPacket(buffer *B.Buffer) (*M.AddrPort, error) {
 			} else {
 				destination = w.Dest
 			}
+			bb.Release()
 			return SingDestination(destination), nil
 		}
 	}
@@ -387,7 +387,6 @@ func (w *PacketConnWrapper) ReadPacket(buffer *B.Buffer) (*M.AddrPort, error) {
 		return nil, nil
 	} else {
 		buffer.Write(bb.Bytes())
-		bb.Release()
 		w.cached = nb
 		var destination net.Destination
 		if bb.Endpoint != nil {
@@ -395,6 +394,7 @@ func (w *PacketConnWrapper) ReadPacket(buffer *B.Buffer) (*M.AddrPort, error) {
 		} else {
 			destination = w.Dest
 		}
+		bb.Release()
 		return SingDestination(destination), nil
 	}
 }

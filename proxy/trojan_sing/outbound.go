@@ -291,6 +291,6 @@ func (c *Client) Process(ctx context.Context, link *transport.Link, dialer inter
 			}
 		}
 
-		return socks.CopyPacketConn(ctx, packetConn, trojan.NewClientPacketConn(outboundConn, c.key))
+		return socks.CopyPacketConn(ctx, packetConn, trojan.NewClientPacketConn(tlsConn, c.key))
 	}
 }
