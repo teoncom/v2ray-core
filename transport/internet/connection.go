@@ -78,15 +78,15 @@ func (c *StatCounterPacketConn) WriteTo(p []byte, addr net.Addr) (n int, err err
 	return
 }
 
-func (c *StatCounterPacketConn) ReadPacket(buffer *B.Buffer) (*M.AddrPort, error) {
+func (c *StatCounterPacketConn) ReadPacket(buffer *B.Buffer) (M.Socksaddr, error) {
 	_, addr, err := buffer.ReadPacketFrom(c)
 	if err != nil {
-		return nil, err
+		return M.Socksaddr{}, err
 	}
-	return M.AddrPortFromNetAddr(addr), nil
+	return M.SocksaddrFromNet(addr), nil
 }
 
-func (c *StatCounterPacketConn) WritePacket(buffer *B.Buffer, destination *M.AddrPort) error {
+func (c *StatCounterPacketConn) WritePacket(buffer *B.Buffer, destination M.Socksaddr) error {
 	_, err := c.WriteTo(buffer.Bytes(), destination.UDPAddr())
 	return err
 }

@@ -9,8 +9,8 @@ import (
 	C "github.com/sagernet/sing/common"
 	B "github.com/sagernet/sing/common/buf"
 	E "github.com/sagernet/sing/common/exceptions"
+	N "github.com/sagernet/sing/common/network"
 	"github.com/sagernet/sing/common/rw"
-	"github.com/sagernet/sing/protocol/socks"
 	"github.com/sagernet/sing/protocol/trojan"
 	"github.com/v2fly/v2ray-core/v5/common"
 	"github.com/v2fly/v2ray-core/v5/common/buf"
@@ -137,11 +137,11 @@ func (c *Client) ProcessConn(ctx context.Context, conn net.Conn, dialer internet
 	direct:
 		return rw.CopyConn(ctx, conn, serverConn)
 	} else {
-		var packetConn socks.PacketConn
-		if sc, isPacketConn := conn.(socks.PacketConn); isPacketConn {
+		var packetConn N.PacketConn
+		if sc, isPacketConn := conn.(N.PacketConn); isPacketConn {
 			packetConn = sc
 		} else if nc, isNetPacket := conn.(net.PacketConn); isNetPacket {
-			packetConn = &socks.PacketConnWrapper{PacketConn: nc}
+			packetConn = &N.PacketConnWrapper{PacketConn: nc}
 		} else {
 			packetConn = &shadowsocks_sing.PacketConnWrapper{
 				Reader: buf.NewReader(conn),
@@ -150,7 +150,7 @@ func (c *Client) ProcessConn(ctx context.Context, conn net.Conn, dialer internet
 				Dest:   destination,
 			}
 		}
-		return socks.CopyPacketConn(ctx, trojan.NewClientPacketConn(outboundConn, c.key), packetConn)
+		return N.CopyPacketConn(ctx, trojan.NewClientPacketConn(outboundConn, c.key), packetConn)
 	}
 }
 
@@ -279,8 +279,8 @@ func (c *Client) Process(ctx context.Context, link *transport.Link, dialer inter
 
 		return rw.CopyConn(ctx, conn, serverConn)
 	} else {
-		var packetConn socks.PacketConn
-		if pc, isPacketConn := inboundConn.(socks.PacketConn); isPacketConn {
+		var packetConn N.PacketConn
+		if pc, isPacketConn := inboundConn.(N.PacketConn); isPacketConn {
 			packetConn = pc
 		} else {
 			packetConn = &shadowsocks_sing.PacketConnWrapper{
@@ -291,6 +291,6 @@ func (c *Client) Process(ctx context.Context, link *transport.Link, dialer inter
 			}
 		}
 
-		return socks.CopyPacketConn(ctx, packetConn, trojan.NewClientPacketConn(tlsConn, c.key))
+		return N.CopyPacketConn(ctx, packetConn, trojan.NewClientPacketConn(tlsConn, c.key))
 	}
 }

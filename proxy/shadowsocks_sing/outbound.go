@@ -11,12 +11,12 @@ import (
 	B "github.com/sagernet/sing/common/buf"
 	E "github.com/sagernet/sing/common/exceptions"
 	M "github.com/sagernet/sing/common/metadata"
+	N "github.com/sagernet/sing/common/network"
 	"github.com/sagernet/sing/common/random"
 	"github.com/sagernet/sing/common/rw"
 	"github.com/sagernet/sing/protocol/shadowsocks"
 	"github.com/sagernet/sing/protocol/shadowsocks/shadowaead"
 	"github.com/sagernet/sing/protocol/shadowsocks/shadowaead_2022"
-	"github.com/sagernet/sing/protocol/socks"
 	"github.com/v2fly/v2ray-core/v5/common"
 	"github.com/v2fly/v2ray-core/v5/common/buf"
 	"github.com/v2fly/v2ray-core/v5/common/net"
@@ -217,9 +217,11 @@ func (o *Outbound) Process(ctx context.Context, link *transport.Link, dialer int
 
 		return rw.CopyConn(ctx, conn, serverConn)
 	} else {
-		var packetConn socks.PacketConn
-		if pc, isPacketConn := inboundConn.(socks.PacketConn); isPacketConn {
+		var packetConn N.PacketConn
+		if pc, isPacketConn := inboundConn.(N.PacketConn); isPacketConn {
 			packetConn = pc
+		} else if nc, isNetPacket := inboundConn.(net.PacketConn); isNetPacket {
+			packetConn = &N.PacketConnWrapper{PacketConn: nc}
 		} else {
 			packetConn = &PacketConnWrapper{
 				Reader: link.Reader,
@@ -230,7 +232,7 @@ func (o *Outbound) Process(ctx context.Context, link *transport.Link, dialer int
 		}
 
 		serverConn := o.method.DialPacketConn(connection)
-		return socks.CopyPacketConn(ctx, packetConn, serverConn)
+		return N.CopyPacketConn(ctx, packetConn, serverConn)
 	}
 }
 
@@ -300,15 +302,16 @@ direct:
 	return rw.CopyConn(ctx, conn, serverConn)
 }
 
-func SingDestination(destination net.Destination) *M.AddrPort {
-	var addr M.Addr
+func SingDestination(destination net.Destination) M.Socksaddr {
+	var addr M.Socksaddr
 	switch destination.Address.Family() {
 	case net.AddressFamilyDomain:
-		addr = M.AddrFromFqdn(destination.Address.Domain())
+		addr.Fqdn = destination.Address.Domain()
 	default:
-		addr = M.AddrFromIP(destination.Address.IP())
+		addr.Addr = M.AddrFromIP(destination.Address.IP())
 	}
-	return M.AddrPortFrom(addr, uint16(destination.Port))
+	addr.Port = uint16(destination.Port)
+	return addr
 }
 
 type PipeConnWrapper struct {
@@ -360,7 +363,7 @@ type PacketConnWrapper struct {
 	cached buf.MultiBuffer
 }
 
-func (w *PacketConnWrapper) ReadPacket(buffer *B.Buffer) (*M.AddrPort, error) {
+func (w *PacketConnWrapper) ReadPacket(buffer *B.Buffer) (M.Socksaddr, error) {
 	if w.cached != nil {
 		mb, bb := buf.SplitFirst(w.cached)
 		if bb == nil {
@@ -380,11 +383,11 @@ func (w *PacketConnWrapper) ReadPacket(buffer *B.Buffer) (*M.AddrPort, error) {
 	}
 	mb, err := w.ReadMultiBuffer()
 	if err != nil {
-		return nil, err
+		return M.Socksaddr{}, err
 	}
 	nb, bb := buf.SplitFirst(mb)
 	if bb == nil {
-		return nil, nil
+		return M.Socksaddr{}, nil
 	} else {
 		buffer.Write(bb.Bytes())
 		w.cached = nb
@@ -399,7 +402,7 @@ func (w *PacketConnWrapper) ReadPacket(buffer *B.Buffer) (*M.AddrPort, error) {
 	}
 }
 
-func (w *PacketConnWrapper) WritePacket(buffer *B.Buffer, addrPort *M.AddrPort) error {
+func (w *PacketConnWrapper) WritePacket(buffer *B.Buffer, addrPort M.Socksaddr) error {
 	vBuf := buf.FromBytes(buffer.Bytes())
 	endpoint := net.DestinationFromAddr(addrPort.UDPAddr())
 	vBuf.Endpoint = &endpoint
