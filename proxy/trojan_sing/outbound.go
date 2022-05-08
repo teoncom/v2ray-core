@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"io"
+	"runtime"
 	"time"
 
 	C "github.com/sagernet/sing/common"
@@ -132,6 +133,7 @@ func (c *Client) ProcessConn(ctx context.Context, conn net.Conn, dialer internet
 			if err != nil {
 				return newError("client handshake").Base(err)
 			}
+			runtime.KeepAlive(_request)
 		}
 
 	direct:
@@ -223,6 +225,7 @@ func (c *Client) Process(ctx context.Context, link *transport.Link, dialer inter
 						cached = nb
 					}
 				}
+				runtime.KeepAlive(_payload)
 			}
 		}
 		if !handshake {
@@ -250,6 +253,7 @@ func (c *Client) Process(ctx context.Context, link *transport.Link, dialer inter
 						mb = nb
 					}
 				}
+				runtime.KeepAlive(_payload)
 			}
 		}
 		if !handshake {

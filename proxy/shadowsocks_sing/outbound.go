@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"io"
+	"runtime"
 	"strings"
 	"time"
 
@@ -161,6 +162,7 @@ func (o *Outbound) Process(ctx context.Context, link *transport.Link, dialer int
 						cached = nb
 					}
 				}
+				runtime.KeepAlive(_payload)
 			}
 		}
 		if !handshake {
@@ -188,6 +190,7 @@ func (o *Outbound) Process(ctx context.Context, link *transport.Link, dialer int
 						mb = nb
 					}
 				}
+				runtime.KeepAlive(_payload)
 			}
 		}
 		if !handshake {
@@ -296,6 +299,7 @@ func (o *Outbound) ProcessConn(ctx context.Context, conn net.Conn, dialer intern
 		if err != nil {
 			return newError("client handshake").Base(err)
 		}
+		runtime.KeepAlive(_request)
 	}
 
 direct:
