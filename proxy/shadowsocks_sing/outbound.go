@@ -59,13 +59,13 @@ func NewClient(ctx context.Context, config *ClientConfig) (*Outbound, error) {
 			}
 			key = bKdy
 		}
-		rng := random.Blake3KeyedHash().Reader
+		var rng io.Reader = random.Default
 		if config.ReducedIvHeadEntropy {
 			rng = &shadowsocks.ReducedEntropyReader{
 				Reader: rng,
 			}
 		}
-		method, err := shadowaead.New(config.Method, key, []byte(config.Password), rng, false)
+		method, err := shadowaead.New(config.Method, key, []byte(config.Password), rng)
 		if err != nil {
 			return nil, newError("create method").Base(err)
 		}
@@ -90,7 +90,7 @@ func NewClient(ctx context.Context, config *ClientConfig) (*Outbound, error) {
 			copy(psk[:], kb)
 			pskList = append(pskList, psk)
 		}
-		rng := random.Blake3KeyedHash().Reader
+		var rng io.Reader = random.Default
 		if config.ReducedIvHeadEntropy {
 			rng = &shadowsocks.ReducedEntropyReader{
 				Reader: rng,
@@ -227,10 +227,11 @@ func (o *Outbound) Process(ctx context.Context, link *transport.Link, dialer int
 			packetConn = &N.PacketConnWrapper{PacketConn: nc}
 		} else {
 			packetConn = &PacketConnWrapper{
-				Reader: link.Reader,
-				Writer: link.Writer,
-				Conn:   inboundConn,
-				Dest:   destination,
+				Reader:  link.Reader,
+				Writer:  link.Writer,
+				PipeOut: pipe.IsPipe(link.Writer),
+				Conn:    inboundConn,
+				Dest:    destination,
 			}
 		}
 
@@ -342,6 +343,7 @@ func (w *PipeConnWrapper) Write(p []byte) (n int, err error) {
 		buffer := buf.New()
 		_, err = buffer.Write(p)
 		if err != nil {
+			buffer.Release()
 			return
 		}
 		err = w.W.WriteMultiBuffer(buf.MultiBuffer{buffer})
@@ -363,8 +365,9 @@ type PacketConnWrapper struct {
 	buf.Reader
 	buf.Writer
 	net.Conn
-	Dest   net.Destination
-	cached buf.MultiBuffer
+	PipeOut bool
+	Dest    net.Destination
+	cached  buf.MultiBuffer
 }
 
 func (w *PacketConnWrapper) ReadPacket(buffer *B.Buffer) (M.Socksaddr, error) {
@@ -407,7 +410,13 @@ func (w *PacketConnWrapper) ReadPacket(buffer *B.Buffer) (M.Socksaddr, error) {
 }
 
 func (w *PacketConnWrapper) WritePacket(buffer *B.Buffer, addrPort M.Socksaddr) error {
-	vBuf := buf.FromBytes(buffer.Bytes())
+	var vBuf *buf.Buffer
+	if w.PipeOut {
+		vBuf = buf.New()
+		vBuf.Write(buffer.Bytes())
+	} else {
+		vBuf = buf.FromBytes(buffer.Bytes())
+	}
 	endpoint := net.DestinationFromAddr(addrPort.UDPAddr())
 	vBuf.Endpoint = &endpoint
 	return w.Writer.WriteMultiBuffer(buf.MultiBuffer{vBuf})
