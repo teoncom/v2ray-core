@@ -18,11 +18,11 @@ require (
 	github.com/jhump/protoreflect v1.12.0
 	github.com/kierdavis/cfb8 v0.0.0-20180105024805-3a17c36ee2f8
 	github.com/lucas-clemente/quic-go v0.27.0
-	github.com/marten-seemann/qtls-go1-17 v0.1.1
+	github.com/marten-seemann/qtls-go1-18 v0.1.1
 	github.com/miekg/dns v1.1.49
 	github.com/mustafaturan/bus v1.0.2
 	github.com/pires/go-proxyproto v0.6.2
-	github.com/sagernet/sing v0.0.0-20220511221614-b1ce47aacaee
+	github.com/sagernet/sing v0.0.0-20220512055044-f1a5f8aaa3c6
 	github.com/seiflotfy/cuckoofilter v0.0.0-20220411075957-e3b120b3f5fb
 	github.com/stretchr/testify v1.7.1
 	github.com/v2fly/BrowserBridge v0.0.0-20210430233438-0570fc1d7d08
@@ -43,6 +43,8 @@ require (
 	inet.af/netaddr v0.0.0-20211027220019-c74959edd3b6
 	lukechampine.com/blake3 v1.1.7
 )
+
+require github.com/marten-seemann/qtls-go1-17 v0.1.1 // indirect
 
 // https://github.com/google/gvisor/releases/tag/release-20220314.0
 replace gvisor.dev/gvisor => github.com/sagernet/gvisor v0.0.0-20220402114650-763d12dc953e
@@ -69,7 +71,6 @@ require (
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/lunixbochs/struc v0.0.0-20200707160740-784aaebc1d40 // indirect
 	github.com/marten-seemann/qtls-go1-16 v0.1.5 // indirect
-	github.com/marten-seemann/qtls-go1-18 v0.1.1 // indirect
 	github.com/mustafaturan/monoton v1.0.0 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
