@@ -22,7 +22,7 @@ require (
 	github.com/miekg/dns v1.1.49
 	github.com/mustafaturan/bus v1.0.2
 	github.com/pires/go-proxyproto v0.6.2
-	github.com/sagernet/sing v0.0.0-20220514073534-7d06e20837ac
+	github.com/sagernet/sing v0.0.0-20220515005650-1cbc30ebc049
 	github.com/seiflotfy/cuckoofilter v0.0.0-20220411075957-e3b120b3f5fb
 	github.com/stretchr/testify v1.7.1
 	github.com/v2fly/BrowserBridge v0.0.0-20210430233438-0570fc1d7d08
