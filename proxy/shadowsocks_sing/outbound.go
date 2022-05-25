@@ -2,6 +2,8 @@ package shadowsocks_sing
 
 import (
 	"context"
+	shadowsocks "github.com/sagernet/sing-shadowsocks"
+	"github.com/sagernet/sing-shadowsocks/shadowimpl"
 	"io"
 	"runtime"
 	"time"
@@ -12,9 +14,6 @@ import (
 	E "github.com/sagernet/sing/common/exceptions"
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
-	"github.com/sagernet/sing/common/random"
-	"github.com/sagernet/sing/protocol/shadowsocks"
-	"github.com/sagernet/sing/protocol/shadowsocks/shadowimpl"
 	"github.com/v2fly/v2ray-core/v5/common"
 	"github.com/v2fly/v2ray-core/v5/common/buf"
 	"github.com/v2fly/v2ray-core/v5/common/net"
@@ -45,13 +44,7 @@ func NewClient(ctx context.Context, config *ClientConfig) (*Outbound, error) {
 			Network: net.Network_TCP,
 		},
 	}
-	var rng io.Reader = random.Default
-	if config.ReducedIvHeadEntropy {
-		rng = &shadowsocks.ReducedEntropyReader{
-			Reader: rng,
-		}
-	}
-	method, err := shadowimpl.FetchMethod(config.Method, config.Key, config.Password, rng)
+	method, err := shadowimpl.FetchMethod(config.Method, config.Password)
 	if err != nil {
 		return nil, err
 	}

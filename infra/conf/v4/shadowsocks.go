@@ -2,7 +2,7 @@ package v4
 
 import (
 	"github.com/golang/protobuf/proto"
-	"github.com/sagernet/sing/protocol/shadowsocks/shadowaead_2022"
+	"github.com/sagernet/sing-shadowsocks/shadowaead_2022"
 	"github.com/v2fly/v2ray-core/v5/common"
 	"github.com/v2fly/v2ray-core/v5/common/protocol"
 	"github.com/v2fly/v2ray-core/v5/common/serial"
