@@ -99,7 +99,7 @@ func (v *ShadowsocksClientConfig) Build() (proto.Message, error) {
 			config.Address = server.Address.Build()
 			config.Port = uint32(server.Port)
 			config.Method = server.Cipher
-			config.Key = server.Password
+			config.Password = server.Password
 			config.ReducedIvHeadEntropy = server.ExperimentReducedIvHeadEntropy
 			return config, nil
 		}

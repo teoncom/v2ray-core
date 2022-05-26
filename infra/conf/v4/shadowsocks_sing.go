@@ -11,7 +11,6 @@ type ShadowsocksSingClientConfig struct {
 	Port                 uint16             `json:"port"`
 	Cipher               string             `json:"method"`
 	Password             string             `json:"password"`
-	Key                  string             `json:"key"`
 	ReducedIvHeadEntropy bool               `json:"reducedIvHeadEntropy"`
 }
 
@@ -21,7 +20,6 @@ func (v *ShadowsocksSingClientConfig) Build() (proto.Message, error) {
 		Port:                 uint32(v.Port),
 		Method:               v.Cipher,
 		Password:             v.Password,
-		Key:                  v.Key,
 		ReducedIvHeadEntropy: v.ReducedIvHeadEntropy,
 	}, nil
 }
