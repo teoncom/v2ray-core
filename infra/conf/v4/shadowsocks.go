@@ -100,7 +100,6 @@ func (v *ShadowsocksClientConfig) Build() (proto.Message, error) {
 			config.Port = uint32(server.Port)
 			config.Method = server.Cipher
 			config.Password = server.Password
-			config.ReducedIvHeadEntropy = server.ExperimentReducedIvHeadEntropy
 			return config, nil
 		}
 	}

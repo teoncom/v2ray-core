@@ -2,12 +2,12 @@ package shadowsocks_sing
 
 import (
 	"context"
-	shadowsocks "github.com/sagernet/sing-shadowsocks"
-	"github.com/sagernet/sing-shadowsocks/shadowimpl"
 	"io"
 	"runtime"
 	"time"
 
+	"github.com/sagernet/sing-shadowsocks"
+	"github.com/sagernet/sing-shadowsocks/shadowimpl"
 	C "github.com/sagernet/sing/common"
 	B "github.com/sagernet/sing/common/buf"
 	"github.com/sagernet/sing/common/bufio"
@@ -63,9 +63,6 @@ func (o *Outbound) Process(ctx context.Context, link *transport.Link, dialer int
 	if outbound == nil || !outbound.Target.IsValid() {
 		return newError("target not specified")
 	}
-	/*if statConn, ok := inboundConn.(*internet.StatCounterConn); ok {
-		inboundConn = statConn.Connection
-	}*/
 	destination := outbound.Target
 	network := destination.Network
 
@@ -83,7 +80,7 @@ func (o *Outbound) Process(ctx context.Context, link *transport.Link, dialer int
 	defer net.RemoveConnection(connElem)
 
 	if network == net.Network_TCP {
-		serverConn := o.method.DialEarlyConn(connection, SingDestination(destination))
+		serverConn := o.method.DialEarlyConn(connection, ToSocksaddr(destination))
 
 		var handshake bool
 		if cachedReader, isCached := link.Reader.(pipe.CachedReader); isCached {
@@ -191,9 +188,6 @@ func (o *Outbound) ProcessConn(ctx context.Context, conn net.Conn, dialer intern
 	if outbound == nil || !outbound.Target.IsValid() {
 		return newError("target not specified")
 	}
-	/*if statConn, ok := inboundConn.(*internet.StatCounterConn); ok {
-		inboundConn = statConn.Connection
-	}*/
 	destination := outbound.Target
 	network := destination.Network
 
@@ -210,7 +204,7 @@ func (o *Outbound) ProcessConn(ctx context.Context, conn net.Conn, dialer intern
 	connElem := net.AddConnection(connection)
 	defer net.RemoveConnection(connElem)
 
-	serverConn := o.method.DialEarlyConn(connection, SingDestination(destination))
+	serverConn := o.method.DialEarlyConn(connection, ToSocksaddr(destination))
 
 	if cr, ok := conn.(bufio.CachedReader); ok {
 		cached := cr.ReadCached()
@@ -254,18 +248,6 @@ direct:
 	return bufio.CopyConn(ctx, conn, serverConn)
 }
 
-func SingDestination(destination net.Destination) M.Socksaddr {
-	var addr M.Socksaddr
-	switch destination.Address.Family() {
-	case net.AddressFamilyDomain:
-		addr.Fqdn = destination.Address.Domain()
-	default:
-		addr.Addr = M.AddrFromIP(destination.Address.IP())
-	}
-	addr.Port = uint16(destination.Port)
-	return addr
-}
-
 type PipeConnWrapper struct {
 	R       io.Reader
 	W       buf.Writer
@@ -274,9 +256,6 @@ type PipeConnWrapper struct {
 }
 
 func (w *PipeConnWrapper) Close() error {
-	common.Interrupt(w.R)
-	common.Interrupt(w.W)
-	common.Close(w.Conn)
 	return nil
 }
 
@@ -287,17 +266,26 @@ func (w *PipeConnWrapper) Read(b []byte) (n int, err error) {
 func (w *PipeConnWrapper) Write(p []byte) (n int, err error) {
 	if w.PipeOut {
 		// avoid bad usage of stack buffer
-		buffer := buf.New()
-		_, err = buffer.Write(p)
-		if err != nil {
-			buffer.Release()
-			return
+		n = len(p)
+		var mb buf.MultiBuffer
+		pLen := len(p)
+		for pLen > 0 {
+			buffer := buf.New()
+			if pLen > buf.Size {
+				_, err = buffer.Write(p[:buf.Size])
+				p = p[buf.Size:]
+			} else {
+				buffer.Write(p)
+			}
+			pLen -= int(buffer.Len())
+			mb = append(mb, buffer)
 		}
-		err = w.W.WriteMultiBuffer(buf.MultiBuffer{buffer})
+		err = w.W.WriteMultiBuffer(mb)
 		if err != nil {
-			buffer.Release()
-			return
+			n = 0
+			buf.ReleaseMulti(mb)
 		}
+		return
 	} else {
 		err = w.W.WriteMultiBuffer(buf.MultiBuffer{buf.FromBytes(p)})
 		if err != nil {
@@ -332,7 +320,7 @@ func (w *PacketConnWrapper) ReadPacket(buffer *B.Buffer) (M.Socksaddr, error) {
 				destination = w.Dest
 			}
 			bb.Release()
-			return SingDestination(destination), nil
+			return ToSocksaddr(destination), nil
 		}
 	}
 	mb, err := w.ReadMultiBuffer()
@@ -352,7 +340,7 @@ func (w *PacketConnWrapper) ReadPacket(buffer *B.Buffer) (M.Socksaddr, error) {
 			destination = w.Dest
 		}
 		bb.Release()
-		return SingDestination(destination), nil
+		return ToSocksaddr(destination), nil
 	}
 }
 
@@ -370,9 +358,6 @@ func (w *PacketConnWrapper) WritePacket(buffer *B.Buffer, addrPort M.Socksaddr) 
 }
 
 func (w *PacketConnWrapper) Close() error {
-	common.Interrupt(w.Reader)
-	common.Interrupt(w.Writer)
-	common.Interrupt(w.Conn)
 	buf.ReleaseMulti(w.cached)
 	return nil
 }
