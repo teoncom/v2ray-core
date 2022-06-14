@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/sagernet/sing-shadowsocks"
+	"github.com/sagernet/sing-shadowsocks/shadowaead_2022"
 	"github.com/sagernet/sing-shadowsocks/shadowimpl"
 	C "github.com/sagernet/sing/common"
 	B "github.com/sagernet/sing/common/buf"
@@ -45,9 +46,19 @@ func NewClient(ctx context.Context, config *ClientConfig) (*Outbound, error) {
 			Port:    net.Port(config.Port),
 			Network: net.Network_TCP,
 		},
-		uot: config.Uot,
+		uot: config.UdpOverTcp,
 	}
-	method, err := shadowimpl.FetchMethod(config.Method, config.Password)
+	var options []shadowaead_2022.MethodOption
+	if config.EncryptedProtocolExtension {
+		options = append(options, shadowaead_2022.MethodOptionEncryptedProtocolExtension())
+	}
+	var method shadowsocks.Method
+	var err error
+	if C.Contains(shadowaead_2022.List, config.Method) {
+		method, err = shadowaead_2022.NewWithPassword(config.Method, config.Password, options...)
+	} else {
+		method, err = shadowimpl.FetchMethod(config.Method, config.Password)
+	}
 	if err != nil {
 		return nil, err
 	}
