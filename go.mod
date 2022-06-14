@@ -22,8 +22,8 @@ require (
 	github.com/miekg/dns v1.1.49
 	github.com/mustafaturan/bus v1.0.2
 	github.com/pires/go-proxyproto v0.6.2
-	github.com/sagernet/sing v0.0.0-20220610074707-a30d5506be41
-	github.com/sagernet/sing-shadowsocks v0.0.0-20220610074818-432dcbdb1d7c
+	github.com/sagernet/sing v0.0.0-20220614091938-64835a637bdc
+	github.com/sagernet/sing-shadowsocks v0.0.0-20220614094139-78976745aad2
 	github.com/seiflotfy/cuckoofilter v0.0.0-20220411075957-e3b120b3f5fb
 	github.com/stretchr/testify v1.7.2
 	github.com/v2fly/BrowserBridge v0.0.0-20210430233438-0570fc1d7d08
@@ -35,7 +35,7 @@ require (
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
 	golang.org/x/net v0.0.0-20220607020251-c690dde0001d
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
-	golang.org/x/sys v0.0.0-20220608164250-635b8c9b7f68
+	golang.org/x/sys v0.0.0-20220610221304-9f5ed59c137d
 	golang.zx2c4.com/wireguard v0.0.0-20220601130007-6a08d81f6bc4
 	google.golang.org/grpc v1.47.0
 	google.golang.org/protobuf v1.28.0

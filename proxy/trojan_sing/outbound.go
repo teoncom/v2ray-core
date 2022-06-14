@@ -143,7 +143,7 @@ func (c *Client) ProcessConn(ctx context.Context, conn net.Conn, dialer internet
 		if sc, isPacketConn := conn.(N.PacketConn); isPacketConn {
 			packetConn = sc
 		} else if nc, isNetPacket := conn.(net.PacketConn); isNetPacket {
-			packetConn = &bufio.PacketConnWrapper{PacketConn: nc}
+			packetConn = bufio.NewPacketConn(nc)
 		} else {
 			packetConn = &shadowsocks_sing.PacketConnWrapper{
 				Reader: buf.NewReader(conn),
