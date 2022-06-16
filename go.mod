@@ -19,29 +19,29 @@ require (
 	github.com/kierdavis/cfb8 v0.0.0-20180105024805-3a17c36ee2f8
 	github.com/lucas-clemente/quic-go v0.27.2
 	github.com/marten-seemann/qtls-go1-18 v0.1.2
-	github.com/miekg/dns v1.1.49
+	github.com/miekg/dns v1.1.50
 	github.com/mustafaturan/bus v1.0.2
 	github.com/pires/go-proxyproto v0.6.2
-	github.com/sagernet/sing v0.0.0-20220616051325-90beb46c6d22
-	github.com/sagernet/sing-shadowsocks v0.0.0-20220616051605-ba1ca0fe9782
+	github.com/sagernet/sing v0.0.0-20220627092450-605697c1aec0
+	github.com/sagernet/sing-shadowsocks v0.0.0-20220627120956-6d5e7fb635f8
 	github.com/seiflotfy/cuckoofilter v0.0.0-20220411075957-e3b120b3f5fb
-	github.com/stretchr/testify v1.7.2
+	github.com/stretchr/testify v1.7.5
 	github.com/v2fly/BrowserBridge v0.0.0-20210430233438-0570fc1d7d08
 	github.com/v2fly/VSign v0.0.0-20201108000810-e2adc24bf848
 	github.com/v2fly/ss-bloomring v0.0.0-20210312155135-28617310f63e
 	github.com/xiaokangwang/VLite v0.0.0-20220418190619-cff95160a432
 	github.com/xtls/go v0.0.0-20210920065950-d4af136d3672
 	go.starlark.net v0.0.0-20220328144851-d1966c6b9fcd
-	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
-	golang.org/x/net v0.0.0-20220614195744-fb05da6f9022
+	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
+	golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
-	golang.org/x/sys v0.0.0-20220615213510-4f61da869c0c
+	golang.org/x/sys v0.0.0-20220624220833-87e55d714810
 	golang.zx2c4.com/wireguard v0.0.0-20220601130007-6a08d81f6bc4
 	google.golang.org/grpc v1.47.0
 	google.golang.org/protobuf v1.28.0
 	gvisor.dev/gvisor v0.0.0
 	h12.io/socks v1.0.3
-	inet.af/netaddr v0.0.0-20211027220019-c74959edd3b6
+	inet.af/netaddr v0.0.0-20220617031823-097006376321
 	lukechampine.com/blake3 v1.1.7
 )
 
@@ -83,7 +83,7 @@ require (
 	github.com/secure-io/siv-go v0.0.0-20180922214919-5ff40651e2c4 // indirect
 	github.com/xtaci/smux v1.5.16 // indirect
 	go4.org/intern v0.0.0-20220301175310-a089fc204883 // indirect
-	go4.org/unsafe/assume-no-moving-gc v0.0.0-20211027215541-db492cf91b37 // indirect
+	go4.org/unsafe/assume-no-moving-gc v0.0.0-20220617031537-928513b29760 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220411224347-583f2d630306 // indirect
