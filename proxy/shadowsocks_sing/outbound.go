@@ -251,7 +251,7 @@ func (o *Outbound) ProcessConn(ctx context.Context, conn net.Conn, dialer intern
 		_request := B.StackNew()
 		request := C.Dup(_request)
 
-		_, err = request.ReadFrom(conn)
+		_, err = request.ReadOnceFrom(conn)
 		if err != nil && !E.IsTimeout(err) {
 			return err
 		}

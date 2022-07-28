@@ -8,7 +8,7 @@ import (
 //go:generate go run github.com/v2fly/v2ray-core/v5/common/errors/errorgen
 
 func ToDestination(socksaddr M.Socksaddr, network net.Network) net.Destination {
-	if socksaddr.Family().IsFqdn() {
+	if socksaddr.IsFqdn() {
 		return net.Destination{
 			Network: network,
 			Address: net.DomainAddress(socksaddr.Fqdn),
