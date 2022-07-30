@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"io"
 	"sync"
-	time "time"
+	"time"
 
 	"github.com/v2fly/v2ray-core/v5/common"
 	"github.com/v2fly/v2ray-core/v5/common/buf"
@@ -106,6 +106,7 @@ func (d *messageDispatcher) Write(ctx context.Context, message buf.MultiBuffer) 
 	if conn.tlsConn != nil {
 		err = conn.tlsConn.HandshakeContext(ctx)
 		if err != nil {
+			conn.cancel()
 			return err
 		}
 	}
