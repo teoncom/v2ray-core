@@ -120,7 +120,7 @@ func (c *Client) ProcessConn(ctx context.Context, conn net.Conn, dialer internet
 			_request := B.StackNew()
 			request := C.Dup(_request)
 
-			_, err = request.ReadFrom(conn)
+			_, err = request.ReadOnceFrom(conn)
 			if err != nil && !E.IsTimeout(err) {
 				return err
 			}

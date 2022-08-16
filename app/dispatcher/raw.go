@@ -57,7 +57,7 @@ func (d *DefaultDispatcher) DispatchConn(ctx context.Context, destination net.De
 	header = B.New()
 	//}
 
-	_, err = header.ReadFrom(conn)
+	_, err = header.ReadOnceFrom(conn)
 	if err != nil && !E.IsTimeout(err) {
 		header.Release()
 		return err
